@@ -22,11 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.calanques.model.ActivityType
 import com.example.calanques.ui.theme.CalanquesTheme
 import com.example.calanques.viewmodel.ActivityTypesUiState
@@ -173,6 +175,9 @@ fun AppHeader() {
 
 @Composable
 fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, onClick: () -> Unit) {
+
+    val imageUrl = "http://webngo.sio.bts:8004/${activityType.image_url}"
+
     val emoji = when {
         activityType.libelle.contains("Randon", ignoreCase = true) || activityType.libelle.contains("Balade", ignoreCase = true) -> "🥾"
         activityType.libelle.contains("Plong", ignoreCase = true) -> "🤿"
@@ -201,7 +206,18 @@ fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, 
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(emoji, fontSize = 24.sp)
+            if (activityType.image_url != null) {
+                AsyncImage(
+                    model = "http://webngo.sio.bts:8004/${activityType.image_url}",
+                    contentDescription = activityType.libelle,
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text(emoji, fontSize = 24.sp)
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
