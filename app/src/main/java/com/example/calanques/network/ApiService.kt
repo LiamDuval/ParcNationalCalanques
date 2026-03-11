@@ -3,6 +3,7 @@ package com.example.calanques.network
 import com.example.calanques.model.Activite
 import com.example.calanques.model.LoginRequest
 import com.example.calanques.model.LoginResponse
+import com.example.calanques.model.ActivityType
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -21,4 +22,7 @@ interface ApiService {
     suspend fun getMesReservations(
         @Header("Authorization") token: String
     ): Response<List<Any>>
+
+    @GET("api/activity-types")
+    suspend fun getActivityTypes(): List<ActivityType>
 }
