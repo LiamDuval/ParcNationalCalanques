@@ -8,7 +8,9 @@ import retrofit2.http.*
 interface ApiService {
 
     @GET("api/activities")
-    suspend fun getActivites(): Response<List<Activite>>
+    suspend fun getActivites(
+        @Query("type_id") type: Int? = null
+    ): Response<List<Activite>>
 
     @GET("api/activities/{id}")
     suspend fun getActivite(@Path("id") id: Int): Response<Activite>

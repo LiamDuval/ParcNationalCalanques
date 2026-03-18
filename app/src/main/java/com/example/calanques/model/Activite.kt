@@ -1,5 +1,6 @@
 package com.example.calanques.model
 
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
@@ -11,5 +12,5 @@ data class Activite(
     @SerialName("tarif") val tarif: Double,
     @SerialName("duree") val duree: String,
     @SerialName("image_url") val image_url: String,
-    @SerialName("type") val type: Int
+    @SerializedName("type_id") val type: Int
 )

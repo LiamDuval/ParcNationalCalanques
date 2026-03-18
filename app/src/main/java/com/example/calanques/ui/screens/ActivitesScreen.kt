@@ -41,10 +41,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.calanques.model.Activite
 import com.example.calanques.model.ActivityType
 import com.example.calanques.viewmodel.ActivitesUiState
@@ -80,10 +82,10 @@ fun ActivitesScreen(
             TopAppBar(
                 title = {
                     val titre = when (val s = uiState) {
-                        is ActivitesUiState.Success ->
-                            s.typeSelectionne?.libelle ?: "Toutes les activités"
+                        is ActivitesUiState.Success -> s.typeSelectionne?.libelle ?: "Toutes les activités"
                         else -> "Activités"
                     }
+
                     Text(
                         text       = titre,
                         fontWeight = FontWeight.Bold,
@@ -161,12 +163,6 @@ fun ActivitesScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // Chips de filtre par type
-                    FiltresTypeBar(
-                        types           = state.activityTypes,
-                        typeSelectionne = state.typeSelectionne,
-                        onTypeClick     = { viewModel.filtrerParType(it) }
-                    )
 
                     // Compteur
                     val nb = state.activites.size
@@ -222,63 +218,6 @@ fun ActivitesScreen(
 }
 
 // ─────────────────────────────────────────────
-// BARRE DE CHIPS HORIZONTALE
-// ─────────────────────────────────────────────
-@Composable
-private fun FiltresTypeBar(
-    types: List<ActivityType>,
-    typeSelectionne: ActivityType?,
-    onTypeClick: (ActivityType?) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BlancCard)
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment     = Alignment.CenterVertically
-    ) {
-        FiltreChip(
-            label      = "Tous",
-            selectionne = typeSelectionne == null,
-            onClick    = { onTypeClick(null) }
-        )
-        types.forEach { type ->
-            FiltreChip(
-                label      = type.libelle,
-                selectionne = typeSelectionne?.id == type.id,
-                onClick    = { onTypeClick(type) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun FiltreChip(
-    label: String,
-    selectionne: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selectionne) Rouge else Color(0xFFF0F0F0))
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 7.dp)
-    ) {
-        Text(
-            text       = label,
-            fontSize   = 13.sp,
-            fontWeight = if (selectionne) FontWeight.Bold else FontWeight.Normal,
-            color      = if (selectionne) Color.White else Gris,
-            maxLines   = 1,
-            overflow   = TextOverflow.Ellipsis
-        )
-    }
-}
-
-// ─────────────────────────────────────────────
 // CARTE D'UNE ACTIVITÉ
 // Sans Coil : image remplacée par un bloc dégradé + emoji
 // ─────────────────────────────────────────────
@@ -298,35 +237,24 @@ private fun ActiviteCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0xFF4472C4), Color(0xFFE51A2E))
-                        )
-                    ),
+                    .height(140.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text       = "ACTIVITÉ",
-                    color      = Color.White.copy(alpha = 0.7f),
-                    fontSize   = 14.sp,
-                    fontWeight = FontWeight.Black
-                )
-
-                // Badge type en haut à gauche (Clean, sans emoji)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(10.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "TYPE ${activite.type}",
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
+                if (activite.image_url != null) {
+                    AsyncImage(
+                        model = "http://webngo.sio.bts:8004/${activite.image_url}",
+                        contentDescription = activite.description,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.LightGray)
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                     )
                 }
             }
@@ -390,3 +318,4 @@ private fun ActiviteCard(
         }
     }
 }
+

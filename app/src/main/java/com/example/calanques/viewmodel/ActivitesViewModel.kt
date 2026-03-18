@@ -1,5 +1,6 @@
 package com.example.calanques.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.calanques.model.Activite
@@ -27,7 +28,9 @@ sealed class ActivitesUiState {
 // VIEWMODEL — remplace l'ancien ActivitesViewModel
 // À placer dans : viewmodel/ActivitesViewModel.kt
 // ─────────────────────────────────────────────
-class ActivitesViewModel : ViewModel() {
+class ActivitesViewModel(
+    savedStateHandle: SavedStateHandle
+    ) : ViewModel() {
 
     // Données brutes (jamais filtrées directement)
     private val _toutesActivites = MutableStateFlow<List<Activite>>(emptyList())
@@ -35,13 +38,13 @@ class ActivitesViewModel : ViewModel() {
     private val _typeSelectionne = MutableStateFlow<ActivityType?>(null)
     private val _isLoading       = MutableStateFlow(true)
     private val _error           = MutableStateFlow<String?>(null)
+    private val initialType = savedStateHandle.get<Int>("type")
 
     // État exposé à l'écran
     private val _uiState = MutableStateFlow<ActivitesUiState>(ActivitesUiState.Loading)
     val uiState: StateFlow<ActivitesUiState> = _uiState
 
     init {
-        // Recalcule l'état affiché à chaque changement de flux
         viewModelScope.launch {
             combine(
                 _toutesActivites,
@@ -51,58 +54,50 @@ class ActivitesViewModel : ViewModel() {
                 _error
             ) { activites, types, typeSelectionne, loading, error ->
                 when {
-                    loading       -> ActivitesUiState.Loading
+                    loading -> ActivitesUiState.Loading
                     error != null -> ActivitesUiState.Error(error)
                     else -> {
-                        // Dans le bloc combine :
-                        val filtrees = if (typeSelectionne == null) {
+                        val listeFiltree = if (typeSelectionne == null) {
                             activites
                         } else {
-                            // On compare l'ID du type de l'activité avec l'ID du type sélectionné
                             activites.filter { it.type == typeSelectionne.id }
                         }
+
                         ActivitesUiState.Success(
-                            activites       = filtrees.sortedBy { it.nom },
-                            activityTypes   = types,
+                            activites = listeFiltree.sortedBy { it.nom },
+                            activityTypes = types,
                             typeSelectionne = typeSelectionne
                         )
                     }
                 }
             }.collect { _uiState.value = it }
         }
-
         chargerDonnees()
     }
 
-    // ─────────────────────────────────────────
-    // Chargement depuis l'API
-    // ─────────────────────────────────────────
     private fun chargerDonnees() {
         viewModelScope.launch {
             _isLoading.value = true
-            _error.value     = null
+            _error.value = null
             try {
-                // Lancement des deux appels
-                val repActivites = RetrofitClient.instance.getActivites()
+                // 1. On appelle l'API avec le filtre
+                val repActivites = RetrofitClient.instance.getActivites(type = initialType)
                 val repTypes = RetrofitClient.instance.getActivityTypes()
 
-                // Vérification de la réponse des Activités
-                if (repActivites.isSuccessful) {
+                if (repActivites.isSuccessful && repTypes.isSuccessful) {
+                    val types = repTypes.body() ?: emptyList()
+                    _activityTypes.value = types
                     _toutesActivites.value = repActivites.body() ?: emptyList()
-                } else {
-                    _error.value = "Erreur activités (${repActivites.code()})"
-                    return@launch
-                }
 
-                // Vérification de la réponse des Types
-                if (repTypes.isSuccessful) {
-                    _activityTypes.value = repTypes.body()?.sortedBy { it.libelle } ?: emptyList()
+                    // 2. On met à jour l'UI pour que le titre affiche le nom du type
+                    if (initialType != null) {
+                        _typeSelectionne.value = types.find { it.id == initialType }
+                    }
                 } else {
-                    _error.value = "Erreur types (${repTypes.code()})"
+                    _error.value = "Erreur de chargement"
                 }
-
             } catch (e: Exception) {
-                _error.value = "Impossible de joindre le serveur : ${e.message}"
+                _error.value = e.message
             } finally {
                 _isLoading.value = false
             }

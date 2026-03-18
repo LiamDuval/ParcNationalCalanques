@@ -65,18 +65,16 @@ class MainActivity : ComponentActivity() {
                             homeViewModel = homeViewModel,
                             activityTypesViewModel = activityTypesViewModel,
                             onActivityTypeClick = { type ->
-                                activitesViewModel.selectActivityType(type)
-                                navController.navigate("activites")
+                                navController.navigate("activites?type=${type.id}")
                             }
                         )
                     }
 
-                    composable("activites") {
+                    composable("activites?type={type}") { backStackEntry ->
                         ActivitesScreen(
                             viewModel = activitesViewModel,
                             onBackClick = { navController.popBackStack() },
-                            onActiviteClick = { activite ->
-                            }
+                            onActiviteClick = { activite -> /* ... */ }
                         )
                     }
                 }
