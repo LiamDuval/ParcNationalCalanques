@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,11 +24,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.toColorLong
 import coil.compose.AsyncImage
 import com.example.calanques.model.ActivityType
 import com.example.calanques.ui.theme.CalanquesTheme
@@ -83,6 +86,15 @@ fun HomeScreen(
         ) {
             // Header
             AppHeader()
+
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Logo Calanques",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .height(200.dp),
+                contentScale = ContentScale.Fit
+            )
 
             // Types section
             Column(modifier = Modifier.padding(16.dp)) {
@@ -178,19 +190,6 @@ fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, 
 
     val imageUrl = "http://webngo.sio.bts:8004/${activityType.image_url}"
 
-    val emoji = when {
-        activityType.libelle.contains("Randon", ignoreCase = true) || activityType.libelle.contains("Balade", ignoreCase = true) -> "🥾"
-        activityType.libelle.contains("Plong", ignoreCase = true) -> "🤿"
-        activityType.libelle.contains("Kayak", ignoreCase = true) -> "🛶"
-        activityType.libelle.contains("Bateau", ignoreCase = true) -> "⛵"
-        activityType.libelle.contains("Escalade", ignoreCase = true) -> "🧗"
-        activityType.libelle.contains("VTT", ignoreCase = true) -> "🚵"
-        activityType.libelle.contains("Yoga", ignoreCase = true) -> "🧘"
-        activityType.libelle.contains("Culture", ignoreCase = true) -> "🏛️"
-        activityType.libelle.contains("H\u00e9lico", ignoreCase = true) || activityType.libelle.contains("Helico", ignoreCase = true) -> "🚁"
-        activityType.libelle.contains("Accrob", ignoreCase = true) -> "🌳"
-        else -> "🏃"
-    }
 
     Card(
         modifier = modifier
@@ -216,7 +215,7 @@ fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, 
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Text(emoji, fontSize = 24.sp)
+
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
