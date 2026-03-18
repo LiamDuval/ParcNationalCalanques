@@ -1,29 +1,15 @@
 package com.example.calanques.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
+
+@Serializable // INDISPENSABLE pour que Retrofit puisse remplir cette classe
 data class Activite(
-    val id: Int,
-    val nom: String,
-    val description: String?,
-    val tarif: Double,
-    val duree: String,
-    val image_url: String?,
-    val type: String
-)
-
-data class LoginRequest(
-    val email: String,
-    val password: String
-)
-
-data class LoginResponse(
-    val token: String,
-    val user: UserInfo
-)
-
-data class UserInfo(
-    val id: Int,
-    val nom: String,
-    val prenom: String,
-    val email: String,
-    val role: String
+    @SerialName("id") val id: Int,
+    @SerialName("nom") val nom: String,
+    @SerialName("description") val description: String,
+    @SerialName("tarif") val tarif: Double,
+    @SerialName("duree") val duree: Double,
+    @SerialName("image_url") val image_url: String,
+    @SerialName("type") val type: Int
 )

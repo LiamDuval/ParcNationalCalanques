@@ -8,9 +8,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,18 +17,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.rememberNavController
 import com.example.calanques.model.ActivityType
 import com.example.calanques.ui.theme.CalanquesTheme
+import com.example.calanques.viewmodel.ActivitesViewModel
 import com.example.calanques.viewmodel.ActivityTypesUiState
 import com.example.calanques.viewmodel.ActivityTypesViewModel
 import com.example.calanques.viewmodel.HomeViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import com.example.calanques.ui.screens.ActivitesScreen
 
 val Red = Color(0xFFE51A2E)
 val RedLight = Color(0xFFFFF0F1)
@@ -44,17 +44,38 @@ val BgColor = Color(0xFFF5F5F5)
 class MainActivity : ComponentActivity() {
     private val homeViewModel: HomeViewModel by viewModels()
     private val activityTypesViewModel: ActivityTypesViewModel by viewModels()
+    private val activitesViewModel: ActivitesViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             CalanquesTheme {
-                HomeScreen(
-                    homeViewModel = homeViewModel,
-                    activityTypesViewModel = activityTypesViewModel,
-                    onActivityTypeClick = { /* TODO: navigation */ }
-                )
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination = "home"
+                ) {
+                    composable("home") {
+                        HomeScreen(
+                            homeViewModel = homeViewModel,
+                            activityTypesViewModel = activityTypesViewModel,
+                            onActivityTypeClick = { type ->
+                                activitesViewModel.selectActivityType(type)
+                                navController.navigate("activites")
+                            }
+                        )
+                    }
+
+                    composable("activites") {
+                        ActivitesScreen(
+                            viewModel = activitesViewModel,
+                            onBackClick = { navController.popBackStack() },
+                            onActiviteClick = { activite ->
+                            }
+                        )
+                    }
+                }
             }
         }
     }
