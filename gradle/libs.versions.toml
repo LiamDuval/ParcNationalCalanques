@@ -14,6 +14,7 @@ navigationComposeAndroid = "2.9.7"
 navigationComposeJvmstubs = "2.9.7"
 
 [libraries]
+coil = { group = "io.coil-kt", name = "coil-compose", version = "2.6.0" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }

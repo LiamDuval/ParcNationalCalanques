@@ -5,9 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -31,6 +37,7 @@ import com.example.calanques.viewmodel.ActivityTypesViewModel
 import com.example.calanques.viewmodel.HomeViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import coil.compose.AsyncImage
 import com.example.calanques.ui.screens.ActivitesScreen
 
 val Red = Color(0xFFE51A2E)
@@ -102,6 +109,15 @@ fun HomeScreen(
         ) {
             // Header
             AppHeader()
+
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Logo Calanques",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .height(200.dp),
+                contentScale = ContentScale.Fit
+            )
 
             // Types section
             Column(modifier = Modifier.padding(16.dp)) {
@@ -194,19 +210,9 @@ fun AppHeader() {
 
 @Composable
 fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val emoji = when {
-        activityType.libelle.contains("Randon", ignoreCase = true) || activityType.libelle.contains("Balade", ignoreCase = true) -> "🥾"
-        activityType.libelle.contains("Plong", ignoreCase = true) -> "🤿"
-        activityType.libelle.contains("Kayak", ignoreCase = true) -> "🛶"
-        activityType.libelle.contains("Bateau", ignoreCase = true) -> "⛵"
-        activityType.libelle.contains("Escalade", ignoreCase = true) -> "🧗"
-        activityType.libelle.contains("VTT", ignoreCase = true) -> "🚵"
-        activityType.libelle.contains("Yoga", ignoreCase = true) -> "🧘"
-        activityType.libelle.contains("Culture", ignoreCase = true) -> "🏛️"
-        activityType.libelle.contains("H\u00e9lico", ignoreCase = true) || activityType.libelle.contains("Helico", ignoreCase = true) -> "🚁"
-        activityType.libelle.contains("Accrob", ignoreCase = true) -> "🌳"
-        else -> "🏃"
-    }
+
+    val imageUrl = "http://webngo.sio.bts:8004/${activityType.image_url}"
+
 
     Card(
         modifier = modifier
@@ -222,7 +228,18 @@ fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, 
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(emoji, fontSize = 24.sp)
+            if (activityType.image_url != null) {
+                AsyncImage(
+                    model = "http://webngo.sio.bts:8004/${activityType.image_url}",
+                    contentDescription = activityType.libelle,
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+
+            }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
