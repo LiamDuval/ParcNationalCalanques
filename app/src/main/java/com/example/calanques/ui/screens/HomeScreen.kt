@@ -26,36 +26,6 @@ import com.example.calanques.viewmodel.ActivityTypesUiState
 import com.example.calanques.viewmodel.ActivityTypesViewModel
 
 // ─────────────────────────────────────────────
-// FONCTION HELPER — retourne un emoji selon le nom du type
-// Appelée dans chaque carte pour illustrer le type d'activité
-// ─────────────────────────────────────────────
-private fun emojiForType(libelle: String): String {
-    val lower = libelle.lowercase()
-        .replace("ã©", "é")
-        .replace("ã¨", "è")
-        .replace("ã ", "à")
-        .replace("ãª", "ê")
-        .replace("ã®", "î")
-        .replace("ã´", "ô")
-        .replace("ã»", "û")
-        .replace("ã§", "ç")
-
-    return when {
-        "randon" in lower || "balade" in lower  -> "\uD83E\uDD7E" // 🥾
-        "plong"  in lower                       -> "\uD83E\uDD3F" // 🤿
-        "kayak"  in lower                       -> "\uD83D\uDEA3" // 🚣
-        "bateau" in lower || "plaisance" in lower -> "\u26F5"     // ⛵
-        "escalade" in lower                     -> "\uD83E\uDDD7" // 🧗
-        "vtt"    in lower                       -> "\uD83D\uDEB5" // 🚵
-        "yoga"   in lower || "medit" in lower   -> "\uD83E\uDDD8" // 🧘
-        "culture" in lower || "visite" in lower -> "\uD83C\uDFDB" // 🏛
-        "helic"  in lower                       -> "\uD83D\uDE81" // 🚁
-        "accrob" in lower                       -> "\uD83C\uDF33" // 🌳
-        else                                    -> "\uD83C\uDF3F" // 🌿
-    }
-}
-
-// ─────────────────────────────────────────────
 // ÉCRAN PRINCIPAL
 // Reçoit le ViewModel (données) et un callback de navigation
 // ─────────────────────────────────────────────
@@ -200,11 +170,6 @@ private fun ActivityTypeCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Emoji représentatif du type
-            Text(
-                text = emojiForType(activityType.libelle),
-                fontSize = 32.sp
-            )
 
             Spacer(modifier = Modifier.width(16.dp)) // espace entre emoji et texte
 
