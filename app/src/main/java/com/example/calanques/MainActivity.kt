@@ -208,9 +208,6 @@ fun AppHeader() {
 @Composable
 fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, onClick: () -> Unit) {
 
-    val imageUrl = "http://webngo.sio.bts:8004/${activityType.image_url}"
-
-
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -219,40 +216,55 @@ fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, 
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (activityType.image_url != null) {
-                AsyncImage(
-                    model = "http://webngo.sio.bts:8004/${activityType.image_url}",
-                    contentDescription = activityType.libelle,
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
+        Column(modifier = Modifier.fillMaxWidth()) {
 
+            // 80% — image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.8f)
+                    .aspectRatio(4f / 3f)
+            ) {
+                if (activityType.image_url != null) {
+                    AsyncImage(
+                        model = "http://webngo.sio.bts:8004/${activityType.image_url}",
+                        contentDescription = activityType.libelle,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.LightGray)
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
+
+            // 20% — nom
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = activityType.libelle,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextColor,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
+                Text("→", fontSize = 14.sp, color = Red, fontWeight = FontWeight.Bold)
             }
-            Text("→", fontSize = 14.sp, color = Red, fontWeight = FontWeight.Bold)
         }
     }
 }
-
 @Composable
 fun HeroStat(number: String, label: String) {
     Column {
