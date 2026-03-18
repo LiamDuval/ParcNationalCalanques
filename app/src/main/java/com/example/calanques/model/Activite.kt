@@ -9,7 +9,7 @@ data class Activite(
     @SerialName("nom") val nom: String,
     @SerialName("description") val description: String,
     @SerialName("tarif") val tarif: Double,
-    @SerialName("duree") val duree: Double,
+    @SerialName("duree") val duree: String,
     @SerialName("image_url") val image_url: String,
     @SerialName("type") val type: Int
 )

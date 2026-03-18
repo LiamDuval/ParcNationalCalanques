@@ -7,6 +7,7 @@ import com.example.calanques.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
 sealed class ActivityTypesUiState {
     object Loading : ActivityTypesUiState()
@@ -25,10 +26,21 @@ class ActivityTypesViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = ActivityTypesUiState.Loading
             try {
-                val types = RetrofitClient.instance.getActivityTypes()
-                _uiState.value = ActivityTypesUiState.Success(types.sortedBy { it.libelle })
+                val response: Response<List<ActivityType>> = RetrofitClient.instance.getActivityTypes()
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null) {
+                        val listeTriee = body.sortedBy { it.libelle }
+                        _uiState.value = ActivityTypesUiState.Success(listeTriee)
+                    } else {
+                        _uiState.value = ActivityTypesUiState.Error("Le serveur a renvoyé une liste vide")
+                    }
+                } else {
+                    _uiState.value = ActivityTypesUiState.Error("Erreur serveur : ${response.code()}")
+                }
             } catch (e: Exception) {
-                _uiState.value = ActivityTypesUiState.Error(e.message ?: "Erreur inconnue")
+                _uiState.value = ActivityTypesUiState.Error("Connexion impossible : ${e.message}")
             }
         }
     }

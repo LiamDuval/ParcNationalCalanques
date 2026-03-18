@@ -7,10 +7,10 @@ import retrofit2.http.*
 
 interface ApiService {
 
-    @GET("api/activites")
+    @GET("api/activities")
     suspend fun getActivites(): Response<List<Activite>>
 
-    @GET("api/activites/{id}")
+    @GET("api/activities/{id}")
     suspend fun getActivite(@Path("id") id: Int): Response<Activite>
 
     @GET("reservations/mes")
@@ -19,5 +19,5 @@ interface ApiService {
     ): Response<List<Any>>
 
     @GET("api/activity-types")
-    suspend fun getActivityTypes(): List<ActivityType>
+    suspend fun getActivityTypes(): Response<List<ActivityType>>
 }

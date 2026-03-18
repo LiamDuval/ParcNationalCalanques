@@ -82,18 +82,27 @@ class ActivitesViewModel : ViewModel() {
             _isLoading.value = true
             _error.value     = null
             try {
+                // Lancement des deux appels
                 val repActivites = RetrofitClient.instance.getActivites()
-                val types        = RetrofitClient.instance.getActivityTypes()
+                val repTypes = RetrofitClient.instance.getActivityTypes()
 
+                // Vérification de la réponse des Activités
                 if (repActivites.isSuccessful) {
                     _toutesActivites.value = repActivites.body() ?: emptyList()
                 } else {
-                    _error.value = "Erreur serveur (${repActivites.code()})"
+                    _error.value = "Erreur activités (${repActivites.code()})"
                     return@launch
                 }
-                _activityTypes.value = types.sortedBy { it.libelle }
+
+                // Vérification de la réponse des Types
+                if (repTypes.isSuccessful) {
+                    _activityTypes.value = repTypes.body()?.sortedBy { it.libelle } ?: emptyList()
+                } else {
+                    _error.value = "Erreur types (${repTypes.code()})"
+                }
+
             } catch (e: Exception) {
-                _error.value = "Impossible de joindre le serveur"
+                _error.value = "Impossible de joindre le serveur : ${e.message}"
             } finally {
                 _isLoading.value = false
             }
