@@ -10,7 +10,7 @@ interface ApiService {
     @GET("api/activites")
     suspend fun getActivites(): Response<List<Activite>>
 
-    @GET("activites/{id}")
+    @GET("api/activites/{id}")
     suspend fun getActivite(@Path("id") id: Int): Response<Activite>
 
     @GET("reservations/mes")
