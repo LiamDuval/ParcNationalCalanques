@@ -20,22 +20,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.calanques.model.ActivityType
+import com.example.calanques.network.ApiConfig.BASE_URL
+import com.example.calanques.ui.screens.ActivitesScreen
 import com.example.calanques.ui.theme.CalanquesTheme
 import com.example.calanques.viewmodel.ActivitesViewModel
 import com.example.calanques.viewmodel.ActivityTypesUiState
 import com.example.calanques.viewmodel.ActivityTypesViewModel
 import com.example.calanques.viewmodel.HomeViewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import coil.compose.AsyncImage
-import com.example.calanques.ui.screens.ActivitesScreen
 
 val Red = Color(0xFFE51A2E)
 val RedLight = Color(0xFFFFF0F1)
@@ -85,6 +87,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel,
@@ -92,6 +95,11 @@ fun HomeScreen(
     onActivityTypeClick: (ActivityType) -> Unit
 ) {
     val uiState by activityTypesViewModel.uiState.collectAsState()
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    
+    // Déterminer le nombre de colonnes en fonction de la largeur (ex: > 600dp = tablette/paysage)
+    val columns = if (configuration.screenWidthDp > 600) 2 else 1
 
     Scaffold(
         containerColor = BgColor,
@@ -107,17 +115,20 @@ fun HomeScreen(
             // Header
             AppHeader()
 
+            // Logo adaptatif (max 200dp ou 30% de la hauteur de l'écran)
+            val logoHeight = minOf(200.dp, (configuration.screenHeightDp * 0.25f).dp)
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo Calanques",
                 modifier = Modifier
-                    .fillMaxSize()
-                    .height(200.dp),
+                    .fillMaxWidth()
+                    .height(logoHeight)
+                    .padding(vertical = 16.dp),
                 contentScale = ContentScale.Fit
             )
 
             // Types section
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -125,19 +136,20 @@ fun HomeScreen(
                 ) {
                     Text(
                         text = "Types d'activités",
-                        fontSize = 20.sp,
+                        fontSize = if (screenWidth > 600.dp) 24.sp else 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextColor
                     )
                     Text(
                         text = "Tout voir",
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         color = Red,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clickable { /* Action */ }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 when (uiState) {
                     is ActivityTypesUiState.Loading -> {
@@ -161,17 +173,26 @@ fun HomeScreen(
                     }
                     is ActivityTypesUiState.Success -> {
                         val types = (uiState as ActivityTypesUiState.Success).activityTypes
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        
+                        // Utilisation de FlowRow pour un rendu en grille adaptatif sans imbriquer de scroll
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            maxItemsInEachRow = columns
+                        ) {
+                            val itemWidth = if (columns > 1) (screenWidth - 44.dp) / 2 else screenWidth - 32.dp
                             types.forEach { type ->
                                 ActivityTypeCard(
                                     activityType = type,
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.width(itemWidth),
                                     onClick = { onActivityTypeClick(type) }
                                 )
                             }
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -183,93 +204,95 @@ fun AppHeader() {
         modifier = Modifier
             .fillMaxWidth()
             .background(SurfaceColor)
+            .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "Calanques",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextColor
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Red
         )
         Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(40.dp)
                 .clip(CircleShape)
-                .background(RedLight),
+                .background(RedLight)
+                .clickable { /* Profile action */ },
             contentAlignment = Alignment.Center
         ) {
-            Text("👤", fontSize = 16.sp)
+            Text("👤", fontSize = 18.sp)
         }
     }
 }
 
 @Composable
 fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, onClick: () -> Unit) {
-
     Card(
         modifier = modifier
-            .fillMaxWidth()
+            .height(200.dp) // Hauteur fixe pour permettre la répartition proportionnelle
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-
-            // 80% — image
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Zone Image : 60%
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.8f)
-                    .aspectRatio(4f / 3f)
+                    .weight(0.6f)
             ) {
-                if (activityType.image_url != null) {
+                if (!activityType.image_url.isNullOrEmpty()) {
                     AsyncImage(
-                        model = "http://webngo.sio.bts:8004/${activityType.image_url}",
+                        model = "${BASE_URL}${activityType.image_url}",
                         contentDescription = activityType.libelle,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                        modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 } else {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.LightGray)
-                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                    )
+                        modifier = Modifier.fillMaxSize().background(Color.LightGray),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Image non disponible", fontSize = 10.sp, color = Color.Gray)
+                    }
                 }
             }
 
-            // 20% — nom
-            Row(
+            // Zone Texte : 40%
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .weight(0.4f)
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Text(
-                    text = activityType.libelle,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextColor,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Text("→", fontSize = 14.sp, color = Red, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = activityType.libelle,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextColor,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.ic_media_play),
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp).padding(start = 4.dp),
+                        tint = Red
+                    )
+                }
             }
         }
-    }
-}
-@Composable
-fun HeroStat(number: String, label: String) {
-    Column {
-        Text(number, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        Text(label.uppercase(), fontSize = 10.sp, color = Color.White.copy(alpha = 0.6f), letterSpacing = 1.5.sp)
     }
 }
 
@@ -277,53 +300,44 @@ fun HeroStat(number: String, label: String) {
 fun BottomNavBar() {
     NavigationBar(
         containerColor = SurfaceColor,
-        tonalElevation = 0.dp,
-        modifier = Modifier
-            .height(72.dp)
-            .windowInsetsPadding(WindowInsets.navigationBars)
+        tonalElevation = 8.dp,
+        // On retire la hauteur fixe qui coupait les têtes et on ajoute le padding système
+        modifier = Modifier.navigationBarsPadding()
     ) {
-        NavigationBarItem(
-            selected = true,
-            onClick = {},
-            icon = { Text("🏠", fontSize = 20.sp) },
-            label = { Text("Accueil", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedTextColor = Red,
-                indicatorColor = RedLight
+        val items = listOf("Accueil" to "🏠", "Activités" to "🔍", "Panier" to "🛒", "Résas" to "📅", "Profil" to "👤")
+        items.forEachIndexed { index, item ->
+            NavigationBarItem(
+                selected = index == 0,
+                onClick = {},
+                icon = {
+                    if (item.first == "Panier") {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Red),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(item.second, fontSize = 20.sp)
+                        }
+                    } else {
+                        // Un petit padding vertical sur l'emoji aide à éviter qu'il soit rogné
+                        Text(item.second, fontSize = 24.sp, modifier = Modifier.padding(bottom = 2.dp))
+                    }
+                },
+                label = {
+                    if (item.first != "Panier") {
+                        Text(item.first, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                    }
+                },
+                alwaysShowLabel = true,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Red,
+                    selectedTextColor = Red,
+                    unselectedTextColor = TextMuted,
+                    indicatorColor = RedLight.copy(alpha = 0.3f)
+                )
             )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Text("🔍", fontSize = 20.sp) },
-            label = { Text("Activités", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(selectedTextColor = Red, indicatorColor = RedLight)
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = {
-                Box(
-                    modifier = Modifier.size(48.dp).clip(CircleShape).background(Red),
-                    contentAlignment = Alignment.Center
-                ) { Text("🛒", fontSize = 20.sp) }
-            },
-            label = {},
-            colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent)
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Text("📅", fontSize = 20.sp) },
-            label = { Text("Réservations", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(selectedTextColor = Red, indicatorColor = RedLight)
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Text("👤", fontSize = 20.sp) },
-            label = { Text("Profil", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(selectedTextColor = Red, indicatorColor = RedLight)
-        )
+        }
     }
 }
