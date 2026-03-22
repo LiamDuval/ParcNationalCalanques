@@ -11,7 +11,7 @@ import org.json.JSONObject
 
 class LoginViewModel : ViewModel() {
 
-    var username by mutableStateOf("") 
+    var username by mutableStateOf("")
     var password by mutableStateOf("")
     
     // Ajout du token pour suivre l'état de connexion
