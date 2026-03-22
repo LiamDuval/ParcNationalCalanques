@@ -9,7 +9,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -41,11 +41,11 @@ import coil.compose.AsyncImage
 import com.example.calanques.model.ActivityType
 import com.example.calanques.network.ApiConfig.BASE_URL
 import com.example.calanques.ui.screens.ActivitesScreen
+import com.example.calanques.ui.screens.LoginScreen
+import com.example.calanques.ui.screens.RegisterScreen
+import com.example.calanques.ui.screens.ProfileScreen
 import com.example.calanques.ui.theme.CalanquesTheme
-import com.example.calanques.viewmodel.ActivitesViewModel
-import com.example.calanques.viewmodel.ActivityTypesUiState
-import com.example.calanques.viewmodel.ActivityTypesViewModel
-import com.example.calanques.viewmodel.HomeViewModel
+import com.example.calanques.viewmodel.*
 
 val Red = Color(0xFFE51A2E)
 val RedLight = Color(0xFFFFF0F1)
@@ -58,6 +58,8 @@ class MainActivity : ComponentActivity() {
     private val homeViewModel: HomeViewModel by viewModels()
     private val activityTypesViewModel: ActivityTypesViewModel by viewModels()
     private val activitesViewModel: ActivitesViewModel by viewModels()
+    private val loginViewModel: LoginViewModel by viewModels()
+    private val registerViewModel: RegisterViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +71,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             CalanquesTheme {
                 val navController = rememberNavController()
+                
+                // État de connexion global simple basé sur le token du loginViewModel
+                val isLoggedIn = loginViewModel.token != null
+
                 NavHost(
                     navController = navController,
                     startDestination = "home"
@@ -80,9 +86,51 @@ class MainActivity : ComponentActivity() {
                             onActivityTypeClick = { type ->
                                 activitesViewModel.selectActivityType(type)
                                 navController.navigate("activites")
+                            },
+                            onProfileClick = { 
+                                val route = if (isLoggedIn) "profile" else "login"
+                                navController.navigate(route) 
+                            },
+                            navController = navController,
+                            isLoggedIn = isLoggedIn
+                        )
+                    }
+
+                    composable("login") {
+                        LoginScreen(
+                            viewModel = loginViewModel,
+                            onLoginSuccess = {
+                                navController.navigate("home") {
+                                    popUpTo("home") { inclusive = true }
+                                }
+                            },
+                            onNavigateToRegister = {
+                                navController.navigate("register")
                             }
                         )
                     }
+
+                    composable("register") {
+                        RegisterScreen(
+                            viewModel = registerViewModel,
+                            onRegisterSuccess = {
+                                navController.navigate("login")
+                            },
+                            onBackToLogin = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
+                    composable("profile") {
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        val profileViewModel = remember { ProfileViewModel(context) }
+                        ProfileScreen(
+                            viewModel = profileViewModel,
+                            token = loginViewModel.token
+                        )
+                    }
+
                     composable("activites") {
                         ActivitesScreen(
                             viewModel = activitesViewModel,
@@ -101,7 +149,10 @@ class MainActivity : ComponentActivity() {
 fun HomeScreen(
     homeViewModel: HomeViewModel,
     activityTypesViewModel: ActivityTypesViewModel,
-    onActivityTypeClick: (ActivityType) -> Unit
+    onActivityTypeClick: (ActivityType) -> Unit,
+    onProfileClick: () -> Unit,
+    navController: NavController,
+    isLoggedIn: Boolean
 ) {
     val uiState by activityTypesViewModel.uiState.collectAsState()
     val configuration = LocalConfiguration.current
@@ -110,7 +161,7 @@ fun HomeScreen(
 
     Scaffold(
         containerColor = BgColor,
-        bottomBar = { BottomNavBar() },
+        bottomBar = { BottomNavBar(navController, isLoggedIn) },
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
         Column(
@@ -119,7 +170,7 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            AppHeader()
+            AppHeader(onProfileClick = onProfileClick)
 
             val logoHeight = minOf(180.dp, (configuration.screenHeightDp * 0.20f).dp)
             Image(
@@ -144,9 +195,7 @@ fun HomeScreen(
 
                 when (uiState) {
                     is ActivityTypesUiState.Loading -> {
-                        Box(modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = Red)
                         }
                     }
@@ -177,9 +226,9 @@ fun HomeScreen(
         }
     }
 }
-
+//
 @Composable
-fun AppHeader() {
+fun AppHeader(onProfileClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,14 +236,14 @@ fun AppHeader() {
             .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+        verticalAlignment = Alignment.CenterVertically) {
         Text(text = "Calanques", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Red)
         Box(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(RedLight),
+                .background(RedLight)
+                .clickable { onProfileClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(Icons.Default.Person, contentDescription = null, tint = Red, modifier = Modifier.size(20.dp))
@@ -205,17 +254,13 @@ fun AppHeader() {
 @Composable
 fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Card(
-        modifier = modifier
-            .height(220.dp)
-            .clickable { onClick() },
+        modifier = modifier.height(220.dp).clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.6f)) {
+            Box(modifier = Modifier.fillMaxWidth().weight(0.6f)) {
                 AsyncImage(
                     model = "${BASE_URL}${activityType.image_url}",
                     contentDescription = null,
@@ -224,10 +269,7 @@ fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, 
                 )
             }
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.4f)
-                    .padding(12.dp),
+                modifier = Modifier.fillMaxWidth().weight(0.4f).padding(12.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -252,36 +294,42 @@ fun ActivityTypeCard(activityType: ActivityType, modifier: Modifier = Modifier, 
 }
 
 @Composable
-fun BottomNavBar() {
+fun BottomNavBar(navController: NavController, isLoggedIn: Boolean) {
     NavigationBar(
         containerColor = SurfaceColor,
         tonalElevation = 8.dp,
         modifier = Modifier.navigationBarsPadding()
     ) {
         val items = listOf(
-            "Activités" to Icons.Default.Search,
-            "Panier" to Icons.Default.ShoppingCart,
-            "Compte" to Icons.Default.Person,
-            "Carte" to Icons.Default.LocationOn
+            Triple("Activités", Icons.Default.Search, "home"),
+            Triple("Panier", Icons.Default.ShoppingCart, "cart"),
+            Triple("Compte", Icons.Default.Person, if (isLoggedIn) "profile" else "login"),
+            Triple("Carte", Icons.Default.LocationOn, "map")
         )
-        items.forEachIndexed { index, item ->
+        items.forEach { item ->
+            val label = item.first
+            val icon = item.second
+            val route = item.third
+            
             NavigationBarItem(
-                selected = index == 0,
-                onClick = {},
+                selected = false,
+                onClick = { 
+                    if (route == "home" || route == "login" || route == "profile") {
+                        navController.navigate(route) 
+                    }
+                },
                 icon = {
                     Icon(
-                        imageVector = item.second,
-                        contentDescription = item.first,
+                        imageVector = icon,
+                        contentDescription = label,
                         modifier = Modifier.size(26.dp)
                     )
                 },
                 label = {
-                    Text(text = item.first, fontSize = 11.sp)
+                    Text(text = label, fontSize = 11.sp)
                 },
                 alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Red,
-                    selectedTextColor = Red,
                     unselectedIconColor = TextMuted,
                     unselectedTextColor = TextMuted,
                     indicatorColor = Color.Transparent
