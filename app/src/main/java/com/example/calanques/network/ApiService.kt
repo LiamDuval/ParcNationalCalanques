@@ -11,7 +11,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
-
+//
 data class LoginResponse(
     @SerializedName("token", alternate = ["access_token"])
     val token: String?,

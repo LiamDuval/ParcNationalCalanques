@@ -10,7 +10,7 @@ import com.example.calanques.network.RetrofitClient
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
-
+//
 class RegisterViewModel : ViewModel() {
     private val apiService = RetrofitClient.instance
 

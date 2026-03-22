@@ -13,7 +13,7 @@ import java.util.*
 
 // Modèle pour les activités affichées
 data class ActivityItem(val title: String, val date: String)
-
+//
 class ProfileViewModel(context: Context) : ViewModel() {
     // État de l'utilisateur
     var userName by mutableStateOf("")

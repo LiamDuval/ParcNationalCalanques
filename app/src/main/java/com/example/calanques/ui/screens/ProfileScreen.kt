@@ -70,7 +70,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, token: String?) {
                     Icon(Icons.Default.Edit, contentDescription = "Editer", modifier = Modifier.size(18.dp))
                 }
             }
-
+//
             Spacer(modifier = Modifier.height(16.dp))
             // Affichage du Prénom et Nom
             Text(text = viewModel.userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
