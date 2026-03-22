@@ -10,7 +10,6 @@ import java.net.UnknownHostException
 object ApiConfig {
 
     const val localUrl = "http://webngo.sio.bts:8004/"
-    // On passe en http car le port 8001 ne supporte visiblement pas le HTTPS (TLS)
     const val prodUrl = "http://webngo.inforostand14.net:8001/"
     
     val BASE_URL = if (BuildConfig.DEBUG) localUrl else prodUrl
@@ -19,14 +18,12 @@ object ApiConfig {
         .addInterceptor { chain ->
             val request = chain.request()
             try {
-                // Tentative 1 : URL locale
                 chain.proceed(request)
             } catch (e: Exception) {
-                // Si l'erreur est liée au DNS ou à la connexion
                 if (e is UnknownHostException || e is IOException) {
                     if (request.url.host == "webngo.sio.bts") {
                         val fallbackUrl = request.url.newBuilder()
-                            .scheme("http") // On force http ici aussi
+                            .scheme("http")
                             .host("webngo.inforostand14.net")
                             .port(8001)
                             .build()
