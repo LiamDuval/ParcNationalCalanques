@@ -42,8 +42,10 @@ interface ApiService {
         }
     }
 
-    @GET("api/activites")
-    suspend fun getActivites(): Response<List<Activite>>
+    @GET("api/activities")
+    suspend fun getActivites(
+        @Query("type_id") type: Int? = null
+    ): Response<List<Activite>>
 
     @GET("api/activites/{id}")
     suspend fun getActivite(@Path("id") id: Int): Response<Activite>
@@ -59,5 +61,5 @@ interface ApiService {
     ): Response<List<ReservationResponse>>
 
     @GET("api/activity-types")
-    suspend fun getActivityTypes(): List<ActivityType>
+    suspend fun getActivityTypes(): Response<List<ActivityType>>
 }

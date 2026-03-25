@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "8.10.1"
 converterGson = "2.11.0"
 kotlin = "2.0.21"
 coreKtx = "1.17.0"
@@ -12,6 +12,7 @@ composeBom = "2024.09.00"
 retrofit = "2.11.0"
 navigationComposeAndroid = "2.9.7"
 navigationComposeJvmstubs = "2.9.7"
+tracingPerfettoHandshake = "1.0.1"
 playServicesGamesV2 = "21.0.0"
 
 [libraries]

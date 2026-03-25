@@ -22,7 +22,7 @@ import coil.compose.AsyncImage
 import com.example.calanques.viewmodel.ProfileViewModel
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel, token: String?) {
+fun ProfileScreen(viewModel: ProfileViewModel, token: String?, padding: PaddingValues) {
     val scrollState = rememberScrollState()
 
     // Charger les données quand l'écran s'affiche

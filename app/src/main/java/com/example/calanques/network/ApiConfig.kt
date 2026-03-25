@@ -1,6 +1,5 @@
 package com.example.calanques.network
 
-import com.example.calanques.BuildConfig
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -10,9 +9,8 @@ import java.net.UnknownHostException
 object ApiConfig {
 
     const val localUrl = "http://webngo.sio.bts:8004/"
-    const val prodUrl = "http://webngo.inforostand14.net:8001/"
 
-    val BASE_URL = if (BuildConfig.DEBUG) localUrl else prodUrl
+    val BASE_URL = localUrl
     val okHttpClient = OkHttpClient.Builder()
         .addInterceptor { chain ->
             val request = chain.request()
