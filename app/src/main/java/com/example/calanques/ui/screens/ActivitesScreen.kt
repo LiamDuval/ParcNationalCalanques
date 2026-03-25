@@ -180,7 +180,6 @@ fun ActivitesScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("🔍", fontSize = 48.sp)
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
                                     text     = "Aucune activité dans cette catégorie",
