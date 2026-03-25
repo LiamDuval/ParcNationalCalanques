@@ -2,15 +2,14 @@ package com.example.calanques.model
 
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerialName
 
-@Serializable // INDISPENSABLE pour que Retrofit puisse remplir cette classe
+@Serializable
 data class Activite(
-    @SerialName("id") val id: Int,
-    @SerialName("nom") val nom: String,
-    @SerialName("description") val description: String,
-    @SerialName("tarif") val tarif: Double,
-    @SerialName("duree") val duree: String,
-    @SerialName("image_url") val image_url: String,
+    val id: Int,
+    val nom: String,
+    val description: String?,
+    val tarif: Double?,
+    val duree: String?,
+    val image_url: String?,
     @SerializedName("type_id") val type: Int
 )

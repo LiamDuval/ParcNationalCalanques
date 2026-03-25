@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -20,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -39,7 +41,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.calanques.model.Activite
-import com.example.calanques.model.ActivityType
 import com.example.calanques.viewmodel.ActivitesUiState
 import com.example.calanques.viewmodel.ActivitesViewModel
 
@@ -67,12 +67,16 @@ private val BlancCard = Color(0xFFFFFFFF)
 @Composable
 fun ActivitesScreen(
     viewModel: ActivitesViewModel,
-    typeInitial: ActivityType? = null,
-    onActiviteClick: (Activite) -> Unit,
-    onBackClick: () -> Unit
+    typeInitialId: Int?,
+    padding: PaddingValues, // On reçoit le padding du Layout global
+    onBackClick: () -> Unit,
+    onActiviteClick: (Activite) -> Unit
 ) {
-    LaunchedEffect(typeInitial) {
-        viewModel.filtrerParType(typeInitial)
+
+    LaunchedEffect(typeInitialId) {
+        typeInitialId?.let {
+            viewModel.selectActivityTypeById(it)
+        }
     }
 
     val uiState by viewModel.uiState.collectAsState()
@@ -85,118 +89,47 @@ fun ActivitesScreen(
                         is ActivitesUiState.Success -> s.typeSelectionne?.libelle ?: "Toutes les activités"
                         else -> "Activités"
                     }
-
                     Text(
                         text       = titre,
                         fontWeight = FontWeight.Bold,
-                        color      = Color.White,
-                        maxLines   = 1,
-                        overflow   = TextOverflow.Ellipsis
+                        color      = Color.White
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour",
-                            tint               = Color.White
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Rouge)
             )
         },
         containerColor = FondPage
     ) { paddingValues ->
-
         when (val state = uiState) {
-
-            // ── Chargement ───────────────────────────────────
             is ActivitesUiState.Loading -> {
-                Box(
-                    modifier         = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(color = Rouge)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text("Chargement des activités…", color = Gris, fontSize = 14.sp)
-                    }
-                }
+                // ... (Garder le bloc Loading tel quel)
             }
-
-            // ── Erreur ───────────────────────────────────────
             is ActivitesUiState.Error -> {
-                Box(
-                    modifier         = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier            = Modifier.padding(24.dp)
-                    ) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text       = "Impossible de charger les activités",
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 16.sp,
-                            color      = Noir
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = state.message, color = Gris, fontSize = 13.sp)
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Button(
-                            onClick = { viewModel.retry() },
-                            colors  = ButtonDefaults.buttonColors(containerColor = Rouge),
-                            shape   = RoundedCornerShape(50)
-                        ) {
-                            Text("Réessayer", color = Color.White)
-                        }
-                    }
-                }
+                // ... (Garder le bloc Error tel quel)
             }
-
-            // ── Succès ───────────────────────────────────────
             is ActivitesUiState.Success -> {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
+                    // LA BARRE DE FILTRE A ÉTÉ SUPPRIMÉE ICI
 
-                    // Compteur
                     val nb = state.activites.size
                     Text(
                         text     = "$nb activité${if (nb > 1) "s" else ""}",
                         fontSize = 12.sp,
                         color    = Gris,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
                     )
 
                     if (state.activites.isEmpty()) {
-                        // Aucun résultat
-                        Box(
-                            modifier         = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text     = "Aucune activité dans cette catégorie",
-                                    color    = Gris,
-                                    fontSize = 14.sp
-                                )
-                            }
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Aucune activité dans cette catégorie", color = Gris)
                         }
                     } else {
-                        // itemsIndexed évite toute ambiguïté avec items(Int)
                         LazyColumn(
-                            contentPadding      = PaddingValues(
-                                start  = 16.dp,
-                                end    = 16.dp,
-                                top    = 4.dp,
-                                bottom = 16.dp
-                            ),
+                            contentPadding      = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             itemsIndexed(
@@ -232,7 +165,6 @@ private fun ActiviteCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column {
-            // ── Bloc image / placeholder ──────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -242,7 +174,7 @@ private fun ActiviteCard(
                 if (activite.image_url != null) {
                     AsyncImage(
                         model = "http://webngo.sio.bts:8004/${activite.image_url}",
-                        contentDescription = activite.description,
+                        contentDescription = null,
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
@@ -279,18 +211,25 @@ private fun ActiviteCard(
                 ) {
                     // Durée avec icône Material
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Utilisation d'une icône Material à la place de l'émoji
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Remplace par Icons.Default.Schedule si tu as l'import
+                            imageVector = Icons.Default.DateRange,
                             contentDescription = null,
                             tint = GrisClair,
-                            modifier = Modifier.height(14.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
+
+                        // PROTECTION ICI : On vérifie si duree n'est pas nul
+                        val dureeTexte = if (!activite.duree.isNullOrEmpty() && activite.duree.length >= 5) {
+                            activite.duree.substring(0, 5).replace(":", "h")
+                        } else {
+                            "--h--" // Valeur par défaut si c'est vide
+                        }
+
                         Text(
-                            text     = "${activite.duree} h",
+                            text = dureeTexte,
                             fontSize = 12.sp,
-                            color    = Gris
+                            color = Gris
                         )
                     }
 
@@ -305,10 +244,10 @@ private fun ActiviteCard(
                             Text("€", fontSize = 13.sp, color = Rouge, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.width(3.dp))
                             Text(
-                                text       = String.format("%.2f", activite.tarif),
-                                fontSize   = 14.sp,
+                                text = String.format("%.2f", activite.tarif ?: 0.0), // Si nul, on affiche 0.00
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
-                                color      = Rouge
+                                color = Rouge
                             )
                         }
                     }
