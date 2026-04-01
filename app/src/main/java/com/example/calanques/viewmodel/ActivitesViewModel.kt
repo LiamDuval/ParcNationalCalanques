@@ -29,7 +29,6 @@ class ActivitesViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val _isLoading       = MutableStateFlow(true)
     private val _error           = MutableStateFlow<String?>(null)
 
-    // 🎯 Utilise bien le "d" minuscule partout
     private var pendingTypeId: Int? = savedStateHandle.get<Int>("type")
 
     private val _uiState = MutableStateFlow<ActivitesUiState>(ActivitesUiState.Loading)
@@ -43,7 +42,6 @@ class ActivitesViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
                     loading -> ActivitesUiState.Loading
                     err != null -> ActivitesUiState.Error(err)
                     else -> {
-                        // Filtrage dynamique : si on a une catégorie, on filtre, sinon liste vide
                         val listeAafficher = if (selection != null) {
                             activites.filter { it.type == selection.id }
                         } else {
@@ -109,6 +107,15 @@ class ActivitesViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
         val type = _activityTypes.value.find { it.id == id }
         if (type != null) {
             _typeSelectionne.value = type
+        }
+    }
+
+    fun getActiviteById(id: Int?): Activite? {
+        val state = uiState.value
+        return if (state is ActivitesUiState.Success) {
+            state.activites.find { it.id == id }
+        } else {
+            null
         }
     }
 }

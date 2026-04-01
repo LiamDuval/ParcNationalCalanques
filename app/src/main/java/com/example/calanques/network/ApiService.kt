@@ -47,7 +47,7 @@ interface ApiService {
         @Query("type_id") type: Int? = null
     ): Response<List<Activite>>
 
-    @GET("api/activites/{id}")
+    @GET("api/activities/{id}")
     suspend fun getActivite(@Path("id") id: Int): Response<Activite>
 
     @GET("api/auth/me")
