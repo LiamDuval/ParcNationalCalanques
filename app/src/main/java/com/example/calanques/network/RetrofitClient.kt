@@ -8,6 +8,7 @@ object RetrofitClient {
         Retrofit.Builder()
             .baseUrl(ApiConfig.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
+            .client(ApiConfig.okHttpClient) // AJOUTER CECI pour le fallback automatique
             .build()
             .create(ApiService::class.java)
     }

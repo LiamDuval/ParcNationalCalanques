@@ -1,5 +1,6 @@
 package com.example.calanques.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.calanques.model.Activite
@@ -10,111 +11,104 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
-// ─────────────────────────────────────────────
-// ÉTATS POSSIBLES DE L'ÉCRAN ACTIVITÉS
-// ─────────────────────────────────────────────
 sealed class ActivitesUiState {
     object Loading : ActivitesUiState()
     data class Success(
-        val activites: List<Activite>,         // liste filtrée à afficher
-        val activityTypes: List<ActivityType>, // types pour les chips de filtre
-        val typeSelectionne: ActivityType?     // type actif (null = tous)
+        val activites: List<Activite>,
+        val activityTypes: List<ActivityType>,
+        val typeSelectionne: ActivityType?
     ) : ActivitesUiState()
     data class Error(val message: String) : ActivitesUiState()
 }
 
-// ─────────────────────────────────────────────
-// VIEWMODEL — remplace l'ancien ActivitesViewModel
-// À placer dans : viewmodel/ActivitesViewModel.kt
-// ─────────────────────────────────────────────
-class ActivitesViewModel : ViewModel() {
+class ActivitesViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
-    // Données brutes (jamais filtrées directement)
     private val _toutesActivites = MutableStateFlow<List<Activite>>(emptyList())
     private val _activityTypes   = MutableStateFlow<List<ActivityType>>(emptyList())
     private val _typeSelectionne = MutableStateFlow<ActivityType?>(null)
     private val _isLoading       = MutableStateFlow(true)
     private val _error           = MutableStateFlow<String?>(null)
 
-    // État exposé à l'écran
+    // 🎯 Utilise bien le "d" minuscule partout
+    private var pendingTypeId: Int? = savedStateHandle.get<Int>("type")
+
     private val _uiState = MutableStateFlow<ActivitesUiState>(ActivitesUiState.Loading)
     val uiState: StateFlow<ActivitesUiState> = _uiState
 
     init {
-        // Recalcule l'état affiché à chaque changement de flux
         viewModelScope.launch {
-            combine(
-                _toutesActivites,
-                _activityTypes,
-                _typeSelectionne,
-                _isLoading,
-                _error
-            ) { activites, types, typeSelectionne, loading, error ->
+            combine(_toutesActivites, _activityTypes, _typeSelectionne, _isLoading, _error)
+            { activites, types, selection, loading, err ->
                 when {
-                    loading       -> ActivitesUiState.Loading
-                    error != null -> ActivitesUiState.Error(error)
+                    loading -> ActivitesUiState.Loading
+                    err != null -> ActivitesUiState.Error(err)
                     else -> {
-                        // Dans le bloc combine :
-                        val filtrees = if (typeSelectionne == null) {
-                            activites
+                        // Filtrage dynamique : si on a une catégorie, on filtre, sinon liste vide
+                        val listeAafficher = if (selection != null) {
+                            activites.filter { it.type == selection.id }
                         } else {
-                            // On compare l'ID du type de l'activité avec l'ID du type sélectionné
-                            activites.filter { it.type == typeSelectionne.id }
+                            emptyList()
                         }
+
                         ActivitesUiState.Success(
-                            activites       = filtrees.sortedBy { it.nom },
-                            activityTypes   = types,
-                            typeSelectionne = typeSelectionne
+                            activites = listeAafficher,
+                            activityTypes = types,
+                            typeSelectionne = selection
                         )
                     }
                 }
             }.collect { _uiState.value = it }
         }
-
         chargerDonnees()
     }
 
-    // ─────────────────────────────────────────
-    // Chargement depuis l'API
-    // ─────────────────────────────────────────
     private fun chargerDonnees() {
         viewModelScope.launch {
             _isLoading.value = true
-            _error.value     = null
             try {
                 val repActivites = RetrofitClient.instance.getActivites()
-                val types        = RetrofitClient.instance.getActivityTypes()
+                val repTypes = RetrofitClient.instance.getActivityTypes()
 
-                if (repActivites.isSuccessful) {
-                    _toutesActivites.value = repActivites.body() ?: emptyList()
-                } else {
-                    _error.value = "Erreur serveur (${repActivites.code()})"
-                    return@launch
+                if (repActivites.isSuccessful && repTypes.isSuccessful) {
+                    val activitesRecues = repActivites.body() ?: emptyList()
+                    val typesRecus = repTypes.body() ?: emptyList()
+
+                    _activityTypes.value = typesRecus
+                    _toutesActivites.value = activitesRecues
+
+                    pendingTypeId?.let { id ->
+                        val typeTrouve = typesRecus.find { it.id == id }
+                        if (typeTrouve != null) {
+                            _typeSelectionne.value = typeTrouve
+                        }
+                    }
                 }
-                _activityTypes.value = types.sortedBy { it.libelle }
             } catch (e: Exception) {
-                _error.value = "Impossible de joindre le serveur"
+                _error.value = e.message
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // ─────────────────────────────────────────
-    // Actions exposées à l'écran
-    // ─────────────────────────────────────────
-
-    /** Sélectionne ou désélectionne un filtre (cliquer le même = annuler) */
-    fun filtrerParType(type: ActivityType?) {
-        _typeSelectionne.value =
-            if (_typeSelectionne.value?.id == type?.id) null else type
+    fun filtrerParIdDirect(id: Int) {
+        pendingTypeId = id
+        val typeTrouve = _activityTypes.value.find { it.id == id }
+        if (typeTrouve != null) {
+            _typeSelectionne.value = typeTrouve
+        }
     }
 
-    /** Recharge les données */
     fun retry() { chargerDonnees() }
 
-    // Ajoute ceci dans la section "Actions exposées à l'écran"
     fun selectActivityType(type: ActivityType) {
-        filtrerParType(type)
+        filtrerParIdDirect(type.id)
+    }
+
+    fun selectActivityTypeById(id: Int) {
+        val type = _activityTypes.value.find { it.id == id }
+        if (type != null) {
+            _typeSelectionne.value = type
+        }
     }
 }
