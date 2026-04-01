@@ -44,6 +44,7 @@ import coil.compose.AsyncImage
 import com.example.calanques.model.ActivityType
 import com.example.calanques.network.ApiConfig.BASE_URL
 import com.example.calanques.ui.components.CalanquesScaffold
+import com.example.calanques.ui.screens.ActiviteDetailScreen
 import com.example.calanques.ui.screens.ActivitesScreen
 import com.example.calanques.ui.screens.LoginScreen
 import com.example.calanques.ui.screens.RegisterScreen
@@ -158,6 +159,22 @@ class MainActivity : ComponentActivity() {
                                 onActiviteClick = { activite ->
                                     navController.navigate("detail_activite/${activite.id}")
                                 }
+                            )
+                        }
+                    }
+
+                    composable(
+                        route = "detail_activite/{activiteId}",
+                        arguments = listOf(navArgument("activiteId") { type = NavType.IntType })
+                    ) { backStackEntry ->
+                        val activiteId = backStackEntry.arguments?.getInt("activiteId") ?: return@composable
+                        val viewModel = remember { ActiviteDetailViewModel(activiteId) }
+
+                        CalanquesScaffold(navController, isLoggedIn) { padding ->
+                            ActiviteDetailScreen(
+                                viewModel = viewModel,
+                                padding = padding,
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
                     }
