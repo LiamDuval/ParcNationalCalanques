@@ -1,6 +1,5 @@
 [versions]
 agp = "8.10.1"
-converterGson = "2.11.0"
 kotlin = "2.0.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -10,8 +9,9 @@ lifecycleRuntimeKtx = "2.9.1"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
 retrofit = "2.11.0"
-navigationComposeAndroid = "2.9.7"
-navigationComposeJvmstubs = "2.9.7"
+converterGson = "2.11.0"
+navigationCompose = "2.9.7"
+playServicesGames = "20.1.2"
 
 [libraries]
 coil = { group = "io.coil-kt", name = "coil-compose", version = "2.6.0" }
@@ -32,8 +32,8 @@ converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-navigation-compose-android = { group = "androidx.navigation", name = "navigation-compose-android", version.ref = "navigationComposeAndroid" }
-androidx-navigation-compose-jvmstubs = { group = "androidx.navigation", name = "navigation-compose-jvmstubs", version.ref = "navigationComposeJvmstubs" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+play-services-games-v2 = { group = "com.google.android.gms", name = "play-services-games-v2", version.ref = "playServicesGames" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
